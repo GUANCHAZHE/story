@@ -17,6 +17,106 @@ const VOICE_CONFIG = {
   rune: { name: '法纹感知', color: 'text-rune', border: 'border-rune/20', bg: 'bg-rune/10', icon: Hexagon, desc: '阅读魔法痕迹、结构性真相。数字不会撒谎——大多数时候。' },
 };
 
+type StoryCharacterCard = {
+  id: string;
+  name: string;
+  title: string;
+  faction: string;
+  anchor: string;
+  objective: string;
+  secret: string;
+  relationNodes: string[];
+  riskIfLost: string;
+  avatarPrompt: string;
+};
+
+const STORY_CHARACTER_CARDS: StoryCharacterCard[] = [
+  {
+    id: 'archivist',
+    name: '校史者（你）',
+    title: '断章编目者 / 余烬见证人',
+    faction: '摇摆中立（人类与魔族双侧可介入）',
+    anchor: '掌握四重“内在之声”，能辨识被世界擦除的叙事缺口。',
+    objective: '在方向被删除、历史被重写的世界里，重建“第八位参与者”的存在证明。',
+    secret: '你并非单纯的记录者，而是被叙事系统选中的“修订接口”。当你记住某段被删历史，它就会重新具备因果重量。',
+    relationNodes: ['艾洛温', '卡尔', '伊斋拉', '镜塔守灯者', '芮雅', '黑盐议会'],
+    riskIfLost: '如果你失去可靠性，所有线索会从“真相碎片”坍塌为“相互矛盾的传闻”。',
+    avatarPrompt: 'anime mysterious archivist traveler old tome runes frieren style',
+  },
+  {
+    id: 'elowen',
+    name: '艾洛温',
+    title: '失名的第八席 / 被删去的火种继承者',
+    faction: '历史空白位（曾属于远征同盟）',
+    anchor: '名字被从歌谣、地图与祭仪中剔除，只在风与透镜折射中留下残响。',
+    objective: '让世界重新承认“第八席”并非错误变量，而是封印深渊叙事引力的关键锚点。',
+    secret: '她当年并未背叛火种，而是主动承担“被遗忘”的代价，把灾变的指向从同伴身上转移到自己。',
+    relationNodes: ['校史者（你）', '卡尔', '芮雅', '镜塔守灯者'],
+    riskIfLost: '若彻底失去她的证据，时间线会自动收束为“七人远征”的伪稳定版本。',
+    avatarPrompt: 'anime silver-haired female knight forgotten hero torn cape frieren style',
+  },
+  {
+    id: 'karl',
+    name: '卡尔',
+    title: '断弦吟游者 / 民间记忆载体',
+    faction: '海岸自由城邦',
+    anchor: '靠残缺旋律保存禁忌史，能把“不能被说出的事”伪装成民谣流通。',
+    objective: '在黑盐议会的审查前，把艾洛温的真名唱进足够多人的梦里。',
+    secret: '他年轻时曾为黑盐议会写过宣传诗，亲手参与过“第八席抹除运动”的情绪工程。',
+    relationNodes: ['校史者（你）', '艾洛温', '黑盐议会', '伊斋拉'],
+    riskIfLost: '若卡尔沉默，民间记忆会被官方叙事完全接管，真相将失去传播路径。',
+    avatarPrompt: 'anime male bard broken lute harbor fog frieren style',
+  },
+  {
+    id: 'izera',
+    name: '伊斋拉',
+    title: '魔族算术师 / 第八变量研究者',
+    faction: '魔族观测学派',
+    anchor: '通过法纹与方程追踪“现实修正”痕迹，是少数确认第八变量存在的人。',
+    objective: '证明世界不是自然遗忘，而是受到可执行的叙事删改协议影响。',
+    secret: '她导师留下的终稿其实是双层文本：上层是论文，下层是“如何在被删除后继续存在”的自救算法。',
+    relationNodes: ['校史者（你）', '卡尔', '芮雅', '黑盐议会'],
+    riskIfLost: '若她的模型失效，你将再也无法区分“历史矛盾”与“幻觉噪声”。',
+    avatarPrompt: 'anime female demon scholar blue skin arcane formulas frieren style',
+  },
+  {
+    id: 'keeper',
+    name: '镜塔守灯者',
+    title: '无名守夜人 / 方向学遗民',
+    faction: '旧灯塔传承',
+    anchor: '以个人记忆为燃料维持灯塔运转，防止“对岸方向”彻底从世界坐标中消失。',
+    objective: '找到可替代记忆燃烧的装置，让灯塔摆脱“守灯者必然衰亡”的宿命。',
+    secret: '历代守灯者都是同一个人被反复重写后的身份续体，他每次“继任”都会遗忘上一轮失败。',
+    relationNodes: ['校史者（你）', '艾洛温', '芮雅'],
+    riskIfLost: '灯灭后海上将不再有“回光”，跨岸叙事会彻底断裂。',
+    avatarPrompt: 'anime lighthouse keeper old coat crystal lens frieren style',
+  },
+  {
+    id: 'reya',
+    name: '芮雅',
+    title: '圣堂抄写官 / 誓约见证者',
+    faction: '灰烬圣堂',
+    anchor: '掌握誓约文书与遗物封存规则，能为碎片证据赋予合法性与神圣约束。',
+    objective: '把散落在戒指、日志、海螺里的私人记忆转写为可在公共仪式中成立的“见证文本”。',
+    secret: '她家族曾替黑盐议会保管过“删除令原卷”，因此一直被圣堂内部监视。',
+    relationNodes: ['校史者（你）', '艾洛温', '伊斋拉', '镜塔守灯者', '黑盐议会'],
+    riskIfLost: '若缺少芮雅的见证，真相将无法进入制度层面，只能停留在传闻与个人信念。',
+    avatarPrompt: 'anime female temple scribe ink-stained hands candle light frieren style',
+  },
+  {
+    id: 'blacksalt',
+    name: '黑盐议会',
+    title: '档案审定机关 / 叙事秩序维护者',
+    faction: '沿岸联邦执政核心',
+    anchor: '通过审定史书、航图与祭仪文本来控制“哪些故事被允许存在”。',
+    objective: '阻止第八席真相扩散，维持“七人远征神话”带来的政治稳定。',
+    secret: '议会并非铁板一块；内部“保序派”与“修复派”都在利用你，想借你定位第八席却导向不同结局。',
+    relationNodes: ['校史者（你）', '卡尔', '伊斋拉', '芮雅'],
+    riskIfLost: '如果无法识别其派系裂缝，你会把所有阻力误判为同一种敌意，错失反制窗口。',
+    avatarPrompt: 'anime secret council silhouettes black salt sigils frieren style',
+  },
+];
+
 function Header({ state, onOpenProfile }: { state: GameState, onOpenProfile: () => void }) {
   const hpPct = Math.round((state.hp / state.maxHp) * 100);
   const hpColor = hpPct > 50 ? 'bg-life' : 'bg-blood';
@@ -125,6 +225,36 @@ function Sidebar({ state }: { state: GameState }) {
           </div>
         </div>
       )}
+
+      <div className="mt-4">
+        <div className="text-[10px] tracking-widest text-ember-dark font-bold mb-2">叙 事 人 物 网</div>
+        <div className="text-[10px] text-tx-faint leading-relaxed mb-2">以下人物卡片以“目标—秘密—关系节点”组织；每一张卡都与至少三个节点互相牵制，构成可回流的网状叙事。</div>
+        <div className="flex flex-col gap-3">
+          {STORY_CHARACTER_CARDS.map((card) => (
+            <div key={card.id} className="p-3 rounded-md border border-ember/15 bg-bg-card space-y-2">
+              <div className="flex items-center gap-2">
+                <AIGeneratedImage prompt={card.avatarPrompt} alt={card.name} className="w-9 h-9 rounded-full border border-ember/30 object-cover" />
+                <div>
+                  <div className="text-xs font-bold text-ember">{card.name}</div>
+                  <div className="text-[10px] text-tx-faint">{card.title}</div>
+                </div>
+              </div>
+              <div className="text-[10px] text-tx-muted"><span className="text-tx-faint">阵营：</span>{card.faction}</div>
+              <div className="text-[10px] text-tx-muted leading-relaxed"><span className="text-song">叙事锚点：</span>{card.anchor}</div>
+              <div className="text-[10px] text-tx-muted leading-relaxed"><span className="text-rune">当前目标：</span>{card.objective}</div>
+              <div className="text-[10px] text-tx-muted leading-relaxed"><span className="text-rift">隐藏真相：</span>{card.secret}</div>
+              <div className="text-[10px] text-tx-muted leading-relaxed"><span className="text-blood">失联风险：</span>{card.riskIfLost}</div>
+              <div className="flex flex-wrap gap-1">
+                {card.relationNodes.map((node) => (
+                  <span key={`${card.id}-${node}`} className="px-1.5 py-0.5 rounded border border-song/20 text-[10px] text-song bg-song/5">
+                    ↔ {node}
+                  </span>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
