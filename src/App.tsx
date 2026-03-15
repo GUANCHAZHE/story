@@ -4,7 +4,7 @@ import { SCENES_DATA, EXAMINE_DATA } from './gameData';
 import { CombatScene } from './CombatScene';
 import { AnimatePresence, motion } from 'motion/react';
 import { Flame, Eye, Music, Hexagon, User, Sparkles, Loader2, LogIn, LogOut } from 'lucide-react';
-import { generateText, getAuthStatus } from './services/ai';
+import { AuthMode, generateText, getAuthStatus } from './services/ai';
 import { preloadImagePool, getRandomImageFromPool } from './services/imagePool';
 import { AIGeneratedImage } from './components/AIGeneratedImage';
 
@@ -391,6 +391,7 @@ export default function App() {
   const [customAction, setCustomAction] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [authMode, setAuthMode] = useState<AuthMode>(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [customActionError, setCustomActionError] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -403,8 +404,9 @@ export default function App() {
     const loadAuth = async () => {
       try {
         setAuthLoading(true);
-        const ok = await getAuthStatus();
-        setIsAuthenticated(ok);
+        const status = await getAuthStatus();
+        setIsAuthenticated(status.authenticated);
+        setAuthMode(status.mode);
       } finally {
         setAuthLoading(false);
       }
@@ -515,17 +517,17 @@ export default function App() {
 
       <div className="px-6 py-2 border-b border-ember/10 bg-bg-panel/60 flex items-center justify-end gap-2">
         <span className="text-xs text-tx-faint">
-          OpenAI OAuth：{authLoading ? '检查中...' : isAuthenticated ? '已连接' : '未连接'}
+          OpenAI：{authLoading ? '检查中...' : isAuthenticated ? (authMode === 'server_key' ? '服务端密钥模式' : 'OAuth 已连接') : '未连接'}
         </span>
-        {isAuthenticated ? (
+        {isAuthenticated && authMode === 'oauth' ? (
           <a href="/api/oauth-logout" className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs rounded border border-ember/30 text-ember hover:bg-ember/10 transition-colors">
             <LogOut className="w-3.5 h-3.5" /> 退出
           </a>
-        ) : (
+        ) : !isAuthenticated ? (
           <a href="/api/oauth-login" className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs rounded border border-rune/30 text-rune hover:bg-rune/10 transition-colors">
             <LogIn className="w-3.5 h-3.5" /> 连接 OpenAI
           </a>
-        )}
+        ) : null}
       </div>
       
       <div className="flex flex-1 overflow-hidden relative">
@@ -581,7 +583,10 @@ export default function App() {
                         深度探索（AI 定制行动）
                       </div>
                       {!isAuthenticated && (
-                        <div className="text-[11px] text-rune mb-2">请先点击右上角“连接 OpenAI”完成 OAuth 登录后再使用 AI 定制行动。</div>
+                        <div className="text-[11px] text-rune mb-2">请先点击右上角“连接 OpenAI”完成 OAuth 登录后再使用 AI 定制行动。若你在中国大陆访问，可改为在服务器配置 OPENAI_API_KEY（服务端密钥模式）以避免 OAuth 回调失败。</div>
+                      )}
+                      {customActionError && (
+                        <div className="text-[11px] text-blood mb-2">{customActionError}</div>
                       )}
                       {customActionError && (
                         <div className="text-[11px] text-blood mb-2">{customActionError}</div>

@@ -23,25 +23,26 @@ export default async function handler(req: any, res: any) {
     return;
   }
 
-  const response = await fetch(tokenUrl, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({
-      grant_type: 'authorization_code',
-      code,
-      redirect_uri: redirectUri,
-      client_id: clientId,
-      client_secret: clientSecret,
-    }),
-  });
+  try {
+    const response = await fetch(tokenUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        grant_type: 'authorization_code',
+        code,
+        redirect_uri: redirectUri,
+        client_id: clientId,
+        client_secret: clientSecret,
+      }),
+    });
 
-  const payload: any = await response.json();
-
-  if (!response.ok || !payload.access_token) {
-    res.statusCode = 502;
-    res.end(payload.error_description || payload.error || 'OAuth token exchange failed');
-    return;
-  }
+    const text = await response.text();
+    let payload: any = null;
+    try {
+      payload = text ? JSON.parse(text) : null;
+    } catch {
+      payload = { raw: text };
+    }
 
   const cookieSecurity = getCookieSecurity(req);
   res.setHeader('Set-Cookie', [
@@ -49,7 +50,17 @@ export default async function handler(req: any, res: any) {
     makeCookie('openai_access_token', payload.access_token, { ...cookieSecurity, maxAge: Math.min(payload.expires_in || 3600, 604800) }),
   ]);
 
-  res.statusCode = 302;
-  res.setHeader('Location', '/');
-  res.end();
+    const cookieSecurity = getCookieSecurity(req);
+    res.setHeader('Set-Cookie', [
+      makeCookie('openai_oauth_state', '', { ...cookieSecurity, maxAge: 0 }),
+      makeCookie('openai_access_token', payload.access_token, { ...cookieSecurity, maxAge: Math.min(payload.expires_in || 3600, 604800) }),
+    ]);
+
+    res.statusCode = 302;
+    res.setHeader('Location', '/');
+    res.end();
+  } catch (error: any) {
+    res.statusCode = 502;
+    res.end(`OAuth token exchange request failed: ${error?.message || 'Network error'}。如在中国大陆访问，请确认服务器可连接 OpenAI OAuth 域名。`);
+  }
 }

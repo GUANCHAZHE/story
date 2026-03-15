@@ -39,9 +39,22 @@ export async function generateVideo(prompt: string): Promise<{ id?: string; stat
   return postJSON('/api/generate-video', { prompt });
 }
 
-export async function getAuthStatus(): Promise<boolean> {
+export type AuthMode = 'oauth' | 'server_key' | 'unknown' | null;
+
+export type AuthStatus = {
+  authenticated: boolean;
+  mode: AuthMode;
+};
+
+export async function getAuthStatus(): Promise<AuthStatus> {
   const response = await fetch('/api/oauth-me', { credentials: 'include' });
-  if (!response.ok) return false;
+  if (!response.ok) {
+    return { authenticated: false, mode: null };
+  }
+
   const data = await response.json();
-  return Boolean(data.authenticated);
+  return {
+    authenticated: Boolean(data.authenticated),
+    mode: (data.mode ?? null) as AuthMode,
+  };
 }
