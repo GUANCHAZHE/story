@@ -44,11 +44,11 @@ export default async function handler(req: any, res: any) {
       payload = { raw: text };
     }
 
-    if (!response.ok || !payload?.access_token) {
-      res.statusCode = 502;
-      res.end(payload?.error_description || payload?.error || 'OAuth token exchange failed');
-      return;
-    }
+  const cookieSecurity = getCookieSecurity(req);
+  res.setHeader('Set-Cookie', [
+    makeCookie('openai_oauth_state', '', { ...cookieSecurity, maxAge: 0 }),
+    makeCookie('openai_access_token', payload.access_token, { ...cookieSecurity, maxAge: Math.min(payload.expires_in || 3600, 604800) }),
+  ]);
 
     const cookieSecurity = getCookieSecurity(req);
     res.setHeader('Set-Cookie', [

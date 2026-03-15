@@ -505,7 +505,6 @@ export default function App() {
       setCustomActionError(message);
       if (/not authenticated|oauth/i.test(message)) {
         setIsAuthenticated(false);
-        setAuthMode(null);
       }
     } finally {
       setIsGenerating(false);
@@ -585,6 +584,9 @@ export default function App() {
                       </div>
                       {!isAuthenticated && (
                         <div className="text-[11px] text-rune mb-2">请先点击右上角“连接 OpenAI”完成 OAuth 登录后再使用 AI 定制行动。若你在中国大陆访问，可改为在服务器配置 OPENAI_API_KEY（服务端密钥模式）以避免 OAuth 回调失败。</div>
+                      )}
+                      {customActionError && (
+                        <div className="text-[11px] text-blood mb-2">{customActionError}</div>
                       )}
                       {customActionError && (
                         <div className="text-[11px] text-blood mb-2">{customActionError}</div>
