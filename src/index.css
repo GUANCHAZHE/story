@@ -1,0 +1,42 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@300;400;500;600;700&family=Ma+Shan+Zheng&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --color-bg-main: #1a1714;
+  --color-bg-panel: #211e19;
+  --color-bg-card: #2a261f;
+  --color-bg-hover: #332e26;
+  
+  --color-tx-main: #d4c9b8;
+  --color-tx-muted: #a89b88;
+  --color-tx-faint: #7a6f60;
+  
+  --color-ember: #c4943a;
+  --color-ember-light: #e8b44a;
+  --color-ember-dark: #8a6a2a;
+  
+  --color-rift: #9b7ec8;
+  --color-song: #5bb8a6;
+  --color-rune: #5a9ec8;
+  
+  --color-blood: #c87070;
+  --color-life: #7ab85b;
+  
+  --font-serif: "Noto Serif SC", "Songti SC", "SimSun", serif;
+  --font-display: "Ma Shan Zheng", cursive;
+}
+
+body {
+  background-color: var(--color-bg-main);
+  color: var(--color-tx-main);
+  font-family: var(--font-serif);
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--color-ember-dark);
+  border-radius: 2px;
+}
+
