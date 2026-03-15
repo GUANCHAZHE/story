@@ -3,8 +3,8 @@ import { GameState } from './types';
 import { SCENES_DATA, EXAMINE_DATA } from './gameData';
 import { CombatScene } from './CombatScene';
 import { AnimatePresence, motion } from 'motion/react';
-import { Flame, Eye, Music, Hexagon, User, Sparkles, Loader2 } from 'lucide-react';
-import { generateText } from './services/ai';
+import { Flame, Eye, Music, Hexagon, User, Sparkles, Loader2, LogIn, LogOut } from 'lucide-react';
+import { generateText, getAuthStatus } from './services/ai';
 import { preloadImagePool, getRandomImageFromPool } from './services/imagePool';
 import { AIGeneratedImage } from './components/AIGeneratedImage';
 
@@ -390,10 +390,26 @@ export default function App() {
   const [showProfile, setShowProfile] = useState(false);
   const [customAction, setCustomAction] = useState('');
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [authLoading, setAuthLoading] = useState(true);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   React.useEffect(() => {
     preloadImagePool();
+  }, []);
+
+  React.useEffect(() => {
+    const loadAuth = async () => {
+      try {
+        setAuthLoading(true);
+        const ok = await getAuthStatus();
+        setIsAuthenticated(ok);
+      } finally {
+        setAuthLoading(false);
+      }
+    };
+
+    loadAuth();
   }, []);
 
   const handleExamine = (id: string) => {
@@ -452,7 +468,7 @@ export default function App() {
   const currentDynamicEvents = gameState.dynamicEvents[gameState.scene] || [];
 
   const handleCustomAction = async () => {
-    if (!customAction.trim() || isGenerating) return;
+    if (!customAction.trim() || isGenerating || !isAuthenticated) return;
     
     setIsGenerating(true);
     const action = customAction.trim();
@@ -489,6 +505,21 @@ export default function App() {
   return (
     <div className="flex flex-col h-screen overflow-hidden bg-bg-main text-tx-main font-serif selection:bg-ember/30">
       <Header state={gameState} onOpenProfile={() => setShowProfile(true)} />
+
+      <div className="px-6 py-2 border-b border-ember/10 bg-bg-panel/60 flex items-center justify-end gap-2">
+        <span className="text-xs text-tx-faint">
+          OpenAI OAuth：{authLoading ? '检查中...' : isAuthenticated ? '已连接' : '未连接'}
+        </span>
+        {isAuthenticated ? (
+          <a href="/api/oauth-logout" className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs rounded border border-ember/30 text-ember hover:bg-ember/10 transition-colors">
+            <LogOut className="w-3.5 h-3.5" /> 退出
+          </a>
+        ) : (
+          <a href="/api/oauth-login" className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs rounded border border-rune/30 text-rune hover:bg-rune/10 transition-colors">
+            <LogIn className="w-3.5 h-3.5" /> 连接 OpenAI
+          </a>
+        )}
+      </div>
       
       <div className="flex flex-1 overflow-hidden relative">
         <Sidebar state={gameState} />
@@ -542,6 +573,9 @@ export default function App() {
                         <Sparkles className="w-3 h-3 text-ember" />
                         深度探索（AI 定制行动）
                       </div>
+                      {!isAuthenticated && (
+                        <div className="text-[11px] text-rune mb-2">请先点击右上角“连接 OpenAI”完成 OAuth 登录后再使用 AI 定制行动。</div>
+                      )}
                       <div className="flex gap-2">
                         <input 
                           type="text" 
@@ -550,11 +584,11 @@ export default function App() {
                           onKeyDown={e => e.key === 'Enter' && handleCustomAction()}
                           placeholder="输入你想做的事，例如：仔细检查墙壁上的划痕..."
                           className="flex-1 bg-bg-panel border border-ember/20 rounded px-3 py-2 text-sm text-tx-main focus:outline-none focus:border-ember/50 transition-colors"
-                          disabled={isGenerating}
+                          disabled={isGenerating || !isAuthenticated}
                         />
                         <button 
                           onClick={handleCustomAction}
-                          disabled={!customAction.trim() || isGenerating}
+                          disabled={!customAction.trim() || isGenerating || !isAuthenticated}
                           className="px-4 py-2 bg-ember/10 text-ember border border-ember/30 rounded hover:bg-ember/20 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center min-w-[80px] transition-colors"
                         >
                           {isGenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : '执行'}
