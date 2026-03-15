@@ -23,6 +23,46 @@ export function json(res: any, status: number, data: unknown) {
   res.end(JSON.stringify(data));
 }
 
+function isHttpsRequest(req: IncomingMessage): boolean {
+  const forwardedProto = req.headers['x-forwarded-proto'];
+  if (typeof forwardedProto === 'string') {
+    return forwardedProto.split(',')[0].trim() === 'https';
+  }
+
+  const host = req.headers.host || '';
+  const isLocalhost = host.startsWith('localhost') || host.startsWith('127.0.0.1');
+  return !isLocalhost;
+}
+
+type CookieOptions = {
+  path?: string;
+  httpOnly?: boolean;
+  secure?: boolean;
+  sameSite?: 'Lax' | 'Strict' | 'None';
+  maxAge?: number;
+};
+
+export function makeCookie(name: string, value: string, options: CookieOptions = {}) {
+  const parts = [`${name}=${encodeURIComponent(value)}`];
+
+  if (options.path) parts.push(`Path=${options.path}`);
+  if (typeof options.maxAge === 'number') parts.push(`Max-Age=${options.maxAge}`);
+  if (options.httpOnly) parts.push('HttpOnly');
+  if (options.secure) parts.push('Secure');
+  if (options.sameSite) parts.push(`SameSite=${options.sameSite}`);
+
+  return parts.join('; ');
+}
+
+export function getCookieSecurity(req: IncomingMessage) {
+  return {
+    secure: isHttpsRequest(req),
+    sameSite: 'Lax' as const,
+    path: '/',
+    httpOnly: true,
+  };
+}
+
 export async function callOpenAI(path: string, token: string, body: unknown) {
   const response = await fetch(`https://api.openai.com${path}`, {
     method: 'POST',

@@ -31,13 +31,8 @@ export async function generateImage(prompt: string): Promise<string> {
 }
 
 export async function generateText(context: string, userAction: string): Promise<string> {
-  try {
-    const data = await postJSON<{ text: string }>('/api/generate-text', { context, userAction });
-    return data.text || '【系统提示：OpenAI 文本生成返回为空。】';
-  } catch (error) {
-    console.error('Text generation error:', error);
-    return '【系统提示：OpenAI 文本生成失败。】';
-  }
+  const data = await postJSON<{ text: string }>('/api/generate-text', { context, userAction });
+  return data.text || '【系统提示：OpenAI 文本生成返回为空。】';
 }
 
 export async function generateVideo(prompt: string): Promise<{ id?: string; status?: string; videoUrl?: string | null; raw?: unknown }> {
