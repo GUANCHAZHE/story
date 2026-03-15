@@ -1,4 +1,4 @@
-import { getCookie } from './_openai';
+import { getCookie, getCookieSecurity, makeCookie } from './_openai';
 
 export default async function handler(req: any, res: any) {
   const code = req.query?.code;
@@ -43,9 +43,10 @@ export default async function handler(req: any, res: any) {
     return;
   }
 
+  const cookieSecurity = getCookieSecurity(req);
   res.setHeader('Set-Cookie', [
-    'openai_oauth_state=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0',
-    `openai_access_token=${encodeURIComponent(payload.access_token)}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${Math.min(payload.expires_in || 3600, 604800)}`,
+    makeCookie('openai_oauth_state', '', { ...cookieSecurity, maxAge: 0 }),
+    makeCookie('openai_access_token', payload.access_token, { ...cookieSecurity, maxAge: Math.min(payload.expires_in || 3600, 604800) }),
   ]);
 
   res.statusCode = 302;

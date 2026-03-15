@@ -392,6 +392,7 @@ export default function App() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [authLoading, setAuthLoading] = useState(true);
+  const [customActionError, setCustomActionError] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   React.useEffect(() => {
@@ -469,7 +470,8 @@ export default function App() {
 
   const handleCustomAction = async () => {
     if (!customAction.trim() || isGenerating || !isAuthenticated) return;
-    
+
+    setCustomActionError(null);
     setIsGenerating(true);
     const action = customAction.trim();
     setCustomAction('');
@@ -495,8 +497,13 @@ export default function App() {
           scrollRef.current.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
         }
       }, 100);
-    } catch (e) {
+    } catch (e: any) {
       console.error(e);
+      const message = e?.message || 'OpenAI 文本生成失败。';
+      setCustomActionError(message);
+      if (/not authenticated|oauth/i.test(message)) {
+        setIsAuthenticated(false);
+      }
     } finally {
       setIsGenerating(false);
     }
@@ -575,6 +582,9 @@ export default function App() {
                       </div>
                       {!isAuthenticated && (
                         <div className="text-[11px] text-rune mb-2">请先点击右上角“连接 OpenAI”完成 OAuth 登录后再使用 AI 定制行动。</div>
+                      )}
+                      {customActionError && (
+                        <div className="text-[11px] text-blood mb-2">{customActionError}</div>
                       )}
                       <div className="flex gap-2">
                         <input 
