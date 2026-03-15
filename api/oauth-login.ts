@@ -1,4 +1,5 @@
 import crypto from 'crypto';
+import { getCookieSecurity, makeCookie } from './_openai';
 
 export default async function handler(req: any, res: any) {
   const clientId = process.env.OPENAI_OAUTH_CLIENT_ID;
@@ -13,7 +14,8 @@ export default async function handler(req: any, res: any) {
   }
 
   const state = crypto.randomBytes(16).toString('hex');
-  res.setHeader('Set-Cookie', `openai_oauth_state=${state}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=600`);
+  const cookieSecurity = getCookieSecurity(req);
+  res.setHeader('Set-Cookie', makeCookie('openai_oauth_state', state, { ...cookieSecurity, maxAge: 600 }));
 
   const url = new URL(authBase);
   url.searchParams.set('response_type', 'code');

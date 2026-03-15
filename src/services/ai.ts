@@ -31,22 +31,30 @@ export async function generateImage(prompt: string): Promise<string> {
 }
 
 export async function generateText(context: string, userAction: string): Promise<string> {
-  try {
-    const data = await postJSON<{ text: string }>('/api/generate-text', { context, userAction });
-    return data.text || '【系统提示：OpenAI 文本生成返回为空。】';
-  } catch (error) {
-    console.error('Text generation error:', error);
-    return '【系统提示：OpenAI 文本生成失败。】';
-  }
+  const data = await postJSON<{ text: string }>('/api/generate-text', { context, userAction });
+  return data.text || '【系统提示：OpenAI 文本生成返回为空。】';
 }
 
 export async function generateVideo(prompt: string): Promise<{ id?: string; status?: string; videoUrl?: string | null; raw?: unknown }> {
   return postJSON('/api/generate-video', { prompt });
 }
 
-export async function getAuthStatus(): Promise<boolean> {
+export type AuthMode = 'oauth' | 'server_key' | 'unknown' | null;
+
+export type AuthStatus = {
+  authenticated: boolean;
+  mode: AuthMode;
+};
+
+export async function getAuthStatus(): Promise<AuthStatus> {
   const response = await fetch('/api/oauth-me', { credentials: 'include' });
-  if (!response.ok) return false;
+  if (!response.ok) {
+    return { authenticated: false, mode: null };
+  }
+
   const data = await response.json();
-  return Boolean(data.authenticated);
+  return {
+    authenticated: Boolean(data.authenticated),
+    mode: (data.mode ?? null) as AuthMode,
+  };
 }
